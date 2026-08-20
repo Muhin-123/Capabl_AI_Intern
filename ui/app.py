@@ -1,5 +1,8 @@
 import streamlit as st
 
+from components.sidebar import render_sidebar
+from components.answer import render_answer
+from components.sources import render_sources
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -25,43 +28,11 @@ st.write(
 
 st.divider()
 
-
 # ============================================================
 # SIDEBAR — DOCUMENT SETTINGS
 # ============================================================
 
-with st.sidebar:
-    st.header("📚 Document")
-
-    uploaded_file = st.file_uploader(
-        "Upload academic material",
-        type=["pdf", "docx", "pptx"],
-    )
-
-    if uploaded_file:
-        st.success("Document uploaded")
-        st.caption(f"**File:** {uploaded_file.name}")
-
-    st.divider()
-
-    st.subheader("📖 Academic Details")
-
-    subject = st.text_input(
-        "Subject",
-        placeholder="e.g. Database Management Systems",
-    )
-
-    topic = st.text_input(
-        "Topic",
-        placeholder="e.g. Normalization",
-    )
-
-    st.divider()
-
-    if uploaded_file:
-        st.info("Document ready for processing.")
-    else:
-        st.warning("Please upload a document.")
+uploaded_file, subject, topic = render_sidebar()
 
 
 # ============================================================
@@ -91,8 +62,6 @@ ask_button = st.button(
 # ANSWER
 # ============================================================
 
-st.header("🤖 AI Answer")
-
 if ask_button:
 
     if not uploaded_file:
@@ -102,24 +71,16 @@ if ask_button:
         st.warning("Please enter a question.")
 
     else:
-        with st.spinner("Analyzing your academic material..."):
-            st.info(
-                "RAG backend integration will be connected here."
-            )
+        render_answer(
+            answer="RAG backend integration will be connected here."
+        )
 
 else:
-    st.caption(
-        "Your AI-generated answer will appear here."
-    )
+    render_answer()
 
 
 # ============================================================
 # SOURCES
 # ============================================================
 
-st.header("📖 Retrieved Sources")
-
-st.caption(
-    "Relevant document sources will appear here "
-    "after the RAG pipeline is connected."
-)
+render_sources()
