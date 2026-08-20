@@ -1,0 +1,11 @@
+Database normalization is the process of organizing data in a database to reduce redundancy and improve data integrity.
+
+First Normal Form (1NF) requires that each column contains atomic values and that each record is unique.
+
+Second Normal Form (2NF) requires a table to be in 1NF and removes partial dependency.
+
+Third Normal Form (3NF) requires a table to be in 2NF and removes transitive dependency.
+
+A primary key uniquely identifies each record in a database.
+
+A foreign key is used to create a relationship between tables.
