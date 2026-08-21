@@ -1,3 +1,5 @@
+from urllib import response
+
 from rag.retriever import retrieve_documents
 from rag.llm import get_llm
 
@@ -43,7 +45,16 @@ ANSWER:
     # Step 5: Generate answer
     response = llm.invoke(prompt)
 
-    return response.content, documents
+    if isinstance(response.content, str):
+        answer = response.content
+    else:
+        answer = "".join(
+            block.get("text", "")
+            for block in response.content
+            if isinstance(block, dict)
+    )
+
+    return answer, documents
 
 
 if __name__ == "__main__":

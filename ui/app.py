@@ -1,8 +1,18 @@
+import sys
+from pathlib import Path
+
+# Add project root to Python path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import streamlit as st
 
 from components.sidebar import render_sidebar
 from components.answer import render_answer
 from components.sources import render_sources
+from rag.pipeline import generate_answer
 
 
 # ============================================================
@@ -110,6 +120,8 @@ ask_button = st.button(
 # ANSWER AREA
 # ============================================================
 
+answer = None
+sources = None
 
 if ask_button:
 
@@ -124,14 +136,22 @@ if ask_button:
         )
 
     else:
-        with st.spinner(
-            "Analyzing your academic material..."
-        ):
-            render_answer(
-                answer=(
-                    "RAG backend integration will be connected here."
+        try:
+            with st.spinner(
+                "Analyzing your academic material..."
+            ):
+                answer, sources = generate_answer(
+                    question.strip()
                 )
+
+            render_answer(answer)
+
+        except Exception as error:
+            st.error(
+                "Something went wrong while generating the answer."
             )
+
+            st.exception(error)
 
 else:
     render_answer()
@@ -141,5 +161,4 @@ else:
 # SOURCES
 # ============================================================
 
-
-render_sources()
+render_sources(sources)

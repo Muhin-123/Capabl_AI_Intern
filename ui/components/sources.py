@@ -2,9 +2,9 @@ import streamlit as st
 
 
 def render_sources(sources=None):
-    """Display the sources retrieved by the RAG pipeline."""
+    """Display sources retrieved by the RAG pipeline."""
 
-    st.header("📖 Retrieved Sources")
+    st.header("📚 Retrieved Sources")
 
     if not sources:
         st.caption(
@@ -14,5 +14,10 @@ def render_sources(sources=None):
         return
 
     for index, source in enumerate(sources, start=1):
+
         with st.expander(f"Source {index}"):
-            st.write(source)
+
+            if hasattr(source, "page_content"):
+                st.write(source.page_content)
+            else:
+                st.write(source)
