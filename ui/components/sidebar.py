@@ -5,24 +5,46 @@ def render_sidebar():
     """Render the document and academic details sidebar."""
 
     with st.sidebar:
+
+        # ----------------------------------------------------
+        # DOCUMENT
+        # ----------------------------------------------------
+
         st.header("📚 Document")
 
         uploaded_file = st.file_uploader(
-            "Upload academic material",
+            "Upload your academic material",
             type=["pdf", "docx", "pptx"],
+            help="Supported formats: PDF, DOCX, and PPTX.",
         )
 
         if uploaded_file:
-            st.success("Document uploaded")
-            st.caption(f"**File:** {uploaded_file.name}")
+            st.success("✓ Document ready")
+
+            st.markdown(
+                f"""
+                **📄 File**
+
+                `{uploaded_file.name}`
+                """
+            )
+        else:
+            st.info(
+                "Upload a PDF, DOCX, or PPTX "
+                "to get started."
+            )
 
         st.divider()
 
-        st.subheader("📖 Academic Details")
+        # ----------------------------------------------------
+        # ACADEMIC DETAILS
+        # ----------------------------------------------------
+
+        st.header("📖 Academic Details")
 
         subject = st.text_input(
             "Subject",
-            placeholder="e.g. Database Management Systems",
+            placeholder="e.g. Database Systems",
         )
 
         topic = st.text_input(
@@ -32,9 +54,15 @@ def render_sidebar():
 
         st.divider()
 
+        # ----------------------------------------------------
+        # STATUS
+        # ----------------------------------------------------
+
+        st.subheader("⚡ Status")
+
         if uploaded_file:
-            st.info("Document ready for processing.")
+            st.success("Document ready for questions.")
         else:
-            st.warning("Please upload a document.")
+            st.warning("Waiting for a document.")
 
     return uploaded_file, subject, topic
