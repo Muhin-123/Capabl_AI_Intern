@@ -1,8 +1,16 @@
 streamlit==1.62.0
+
+PyPDF2
+python-docx
+python-pptx
+
+langchain
 langchain-community
+langchain-text-splitters
 langchain-huggingface
 langchain-google-genai
-langchain-text-splitters
+
 sentence-transformers
 faiss-cpu
+
 python-dotenv

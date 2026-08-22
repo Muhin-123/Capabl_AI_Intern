@@ -1,17 +1,30 @@
+import os
 import sys
+import tempfile
 from pathlib import Path
 
-# Add project root to Python path
+# ============================================================
+# PROJECT PATH
+# ============================================================
+
+# Add project root to Python path before importing project modules
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+
+# ============================================================
+# IMPORTS
+# ============================================================
 
 import streamlit as st
 
 from components.sidebar import render_sidebar
 from components.answer import render_answer
 from components.sources import render_sources
+
+from document_processing.processor import process_document
 from rag.pipeline import generate_answer
 
 
@@ -117,13 +130,18 @@ ask_button = st.button(
 
 
 # ============================================================
-# ANSWER AREA
+# ANSWER + SOURCES
 # ============================================================
 
 answer = None
 sources = None
 
+
 if ask_button:
+
+    # --------------------------------------------------------
+    # VALIDATION
+    # --------------------------------------------------------
 
     if not uploaded_file:
         st.warning(
@@ -136,29 +154,126 @@ if ask_button:
         )
 
     else:
+
+        temp_file_path = None
+
         try:
+
+            # ------------------------------------------------
+            # STEP 1 — SAVE UPLOADED FILE TEMPORARILY
+            # ------------------------------------------------
+
             with st.spinner(
-                "Analyzing your academic material..."
+                "Processing your academic material..."
             ):
-                answer, sources = generate_answer(
-                    question.strip()
+
+                suffix = Path(uploaded_file.name).suffix
+
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=suffix,
+                ) as temp_file:
+
+                    temp_file.write(
+                        uploaded_file.getbuffer()
+                    )
+
+                    temp_file_path = temp_file.name
+
+                # --------------------------------------------
+                # STEP 2 — MEMBER 2 DOCUMENT PROCESSOR
+                # --------------------------------------------
+
+                document_result = process_document(
+                    temp_file_path
                 )
 
-            render_answer(answer)
+            # ------------------------------------------------
+            # STEP 3 — CHECK PROCESSING RESULT
+            # ------------------------------------------------
 
-        except Exception as error:
+            if "error" in document_result:
+
+                st.error(
+                    document_result["error"]
+                )
+
+            else:
+
+                document_text = document_result["text"]
+
+                if not document_text.strip():
+
+                    st.error(
+                        "No readable text could be extracted "
+                        "from the uploaded document."
+                    )
+
+                else:
+
+                    # ----------------------------------------
+                    # DOCUMENT INFORMATION
+                    # ----------------------------------------
+
+                    st.success(
+                        f"Document processed successfully "
+                        f"({document_result['category']})."
+                    )
+
+                    # ----------------------------------------
+                    # STEP 4 — MEMBER 1 RAG PIPELINE
+                    # ----------------------------------------
+
+                    with st.spinner(
+                        "Generating your answer..."
+                    ):
+
+                        answer, sources = generate_answer(
+                            question.strip(),
+                            document_text,
+                        )
+
+        except Exception as e:
+
             st.error(
-                "Something went wrong while generating the answer."
+                "Something went wrong while processing "
+                "your document or generating the answer."
             )
 
-            st.exception(error)
+            st.exception(e)
+
+        finally:
+
+            # ----------------------------------------------
+            # STEP 5 — DELETE TEMPORARY FILE
+            # ----------------------------------------------
+
+            if (
+                temp_file_path
+                and os.path.exists(temp_file_path)
+            ):
+                os.remove(temp_file_path)
+
+
+# ============================================================
+# DISPLAY ANSWER
+# ============================================================
+
+if answer:
+
+    render_answer(
+        answer=answer
+    )
 
 else:
+
     render_answer()
 
 
 # ============================================================
-# SOURCES
+# DISPLAY SOURCES
 # ============================================================
 
-render_sources(sources)
+render_sources(
+    sources
+)
