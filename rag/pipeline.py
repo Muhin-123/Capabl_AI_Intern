@@ -1,10 +1,15 @@
+
 from rag.retriever import retrieve_documents
 from rag.llm import get_llm
 
 
-def generate_answer(question: str):
+def generate_answer(question: str, document_text: str):
     # Step 1: Retrieve relevant chunks from FAISS
-    documents = retrieve_documents(question, k=3)
+    documents = retrieve_documents(
+    question,
+    document_text,
+    k=3,
+)
 
     # Step 2: Combine retrieved chunks
     context = "\n\n".join(
@@ -43,13 +48,30 @@ ANSWER:
     # Step 5: Generate answer
     response = llm.invoke(prompt)
 
-    return response.content, documents
+    if isinstance(response.content, str):
+        answer = response.content
+    else:
+        answer = "".join(
+            block.get("text", "")
+            for block in response.content
+            if isinstance(block, dict)
+    )
+
+    return answer, documents
 
 
 if __name__ == "__main__":
     question = "What is Second Normal Form?"
 
-    answer, sources = generate_answer(question)
+    document_text = """
+    Second Normal Form (2NF) requires a table to be in First Normal Form
+    and removes partial dependency.
+    """
+
+    answer, sources = generate_answer(
+        question,
+        document_text,
+    )
 
     print("\n==============================")
     print("ANSWER")
