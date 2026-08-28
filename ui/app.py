@@ -307,9 +307,12 @@ if selected_question:
         ):
 
             answer, sources = generate_answer(
-                selected_question["question"],
-                document_text,
-            )
+    question=selected_question["question"],
+    document_text=document_text,
+    question_type=selected_question.get("type", "theory"),
+    options=selected_question.get("options", {}),
+    marks=selected_question.get("marks"),
+    )
 
         st.markdown(
             '<div class="section-title">'
