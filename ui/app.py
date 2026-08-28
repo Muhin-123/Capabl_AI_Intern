@@ -23,7 +23,7 @@ import streamlit as st
 from components.sidebar import render_sidebar
 from components.answer import render_answer
 from components.sources import render_sources
-
+from components.question_bank import render_question_bank
 from document_processing.processor import process_document
 from rag.pipeline import generate_answer
 
@@ -102,11 +102,136 @@ st.divider()
 # ============================================================
 
 uploaded_file, subject, topic = render_sidebar()
+answer = None
+sources = None
 
-
+# Temporary mock questions for Question Bank UI development.
+# Replace with document processor output later.
+mock_questions = [
+    {
+        "question_number": 1,
+        "question": "What is database normalization?",
+        "marks": 5,
+    },
+    {
+        "question_number": 2,
+        "question": "Explain Second Normal Form (2NF).",
+        "marks": 10,
+    },
+    {
+        "question_number": 3,
+        "question": "Explain the difference between 2NF and 3NF.",
+        "marks": 10,
+    },
+]
 # ============================================================
 # QUESTION AREA
 # ============================================================
+# ============================================================
+# QUESTION BANK
+# ============================================================
+
+# ============================================================
+# QUESTION BANK
+# ============================================================
+
+selected_question = render_question_bank(mock_questions)
+
+if selected_question:
+
+    st.session_state["selected_question"] = selected_question
+
+    if not uploaded_file:
+
+        st.warning(
+            "Please upload an academic document first."
+        )
+
+    else:
+
+        temp_file_path = None
+
+        try:
+
+            # --------------------------------------------
+            # PROCESS UPLOADED DOCUMENT
+            # --------------------------------------------
+
+            with st.spinner(
+                "Processing your academic material..."
+            ):
+
+                suffix = Path(uploaded_file.name).suffix
+
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=suffix,
+                ) as temp_file:
+
+                    temp_file.write(
+                        uploaded_file.getbuffer()
+                    )
+
+                    temp_file_path = temp_file.name
+
+                document_result = process_document(
+                    temp_file_path
+                )
+
+            # --------------------------------------------
+            # CHECK DOCUMENT
+            # --------------------------------------------
+
+            if "error" in document_result:
+
+                st.error(
+                    document_result["error"]
+                )
+
+            else:
+
+                document_text = document_result["text"]
+
+                st.session_state["document_text"] = document_text
+
+                if not document_text.strip():
+
+                    st.error(
+                        "No readable text could be extracted "
+                        "from the uploaded document."
+                    )
+
+                else:
+
+                    # ----------------------------------------
+                    # GENERATE SOLUTION
+                    # ----------------------------------------
+
+                    with st.spinner(
+                        "Generating solution..."
+                    ):
+
+                        answer, sources = generate_answer(
+                            selected_question["question"],
+                            document_text,
+                        )
+
+        except Exception as e:
+
+            st.error(
+                "Something went wrong while generating "
+                "the solution."
+            )
+
+            st.exception(e)
+
+        finally:
+
+            if (
+                temp_file_path
+                and os.path.exists(temp_file_path)
+            ):
+                os.remove(temp_file_path)
 
 st.markdown(
     '<div class="section-title">❓ Ask a Question</div>',
@@ -133,8 +258,7 @@ ask_button = st.button(
 # ANSWER + SOURCES
 # ============================================================
 
-answer = None
-sources = None
+
 
 
 if ask_button:
@@ -201,6 +325,8 @@ if ask_button:
             else:
 
                 document_text = document_result["text"]
+
+                st.session_state["document_text"] = document_text
 
                 if not document_text.strip():
 
