@@ -7,7 +7,6 @@ from pathlib import Path
 # PROJECT PATH
 # ============================================================
 
-# Add project root to Python path before importing project modules
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 if str(PROJECT_ROOT) not in sys.path:
@@ -24,7 +23,10 @@ from components.sidebar import render_sidebar
 from components.answer import render_answer
 from components.sources import render_sources
 from components.question_bank import render_question_bank
+
 from document_processing.processor import process_document
+from document_processing.question_extractor import extract_questions
+
 from rag.pipeline import generate_answer
 
 
@@ -102,66 +104,52 @@ st.divider()
 # ============================================================
 
 uploaded_file, subject, topic = render_sidebar()
-answer = None
-sources = None
 
-# Temporary mock questions for Question Bank UI development.
-# Replace with document processor output later.
-mock_questions = [
-    {
-        "question_number": 1,
-        "question": "What is database normalization?",
-        "marks": 5,
-    },
-    {
-        "question_number": 2,
-        "question": "Explain Second Normal Form (2NF).",
-        "marks": 10,
-    },
-    {
-        "question_number": 3,
-        "question": "Explain the difference between 2NF and 3NF.",
-        "marks": 10,
-    },
-]
-# ============================================================
-# QUESTION AREA
-# ============================================================
-# ============================================================
-# QUESTION BANK
-# ============================================================
 
 # ============================================================
-# QUESTION BANK
+# SESSION STATE
 # ============================================================
 
-selected_question = render_question_bank(mock_questions)
+if "document_text" not in st.session_state:
+    st.session_state["document_text"] = ""
 
-if selected_question:
+if "questions" not in st.session_state:
+    st.session_state["questions"] = []
 
-    st.session_state["selected_question"] = selected_question
+if "processed_filename" not in st.session_state:
+    st.session_state["processed_filename"] = None
 
-    if not uploaded_file:
+if "document_category" not in st.session_state:
+    st.session_state["document_category"] = None
 
-        st.warning(
-            "Please upload an academic document first."
-        )
 
-    else:
+# ============================================================
+# PROCESS UPLOADED DOCUMENT
+# ============================================================
+
+if uploaded_file:
+
+    # Process only when a new/different document is uploaded.
+    if (
+        st.session_state["processed_filename"]
+        != uploaded_file.name
+    ):
 
         temp_file_path = None
 
         try:
 
-            # --------------------------------------------
-            # PROCESS UPLOADED DOCUMENT
-            # --------------------------------------------
-
             with st.spinner(
                 "Processing your academic material..."
             ):
 
-                suffix = Path(uploaded_file.name).suffix
+                # ------------------------------------------------
+                # SAVE UPLOADED FILE TEMPORARILY
+                # ------------------------------------------------
+
+                suffix = Path(
+                    uploaded_file.name
+                ).suffix
 
                 with tempfile.NamedTemporaryFile(
                     delete=False,
@@ -174,13 +162,18 @@ if selected_question:
 
                     temp_file_path = temp_file.name
 
+                # ------------------------------------------------
+                # PROCESS DOCUMENT
+                # ------------------------------------------------
+
                 document_result = process_document(
-                    temp_file_path
+                    temp_file_path,
+                    uploaded_file.name,
                 )
 
-            # --------------------------------------------
-            # CHECK DOCUMENT
-            # --------------------------------------------
+            # ----------------------------------------------------
+            # HANDLE PROCESSING ERROR
+            # ----------------------------------------------------
 
             if "error" in document_result:
 
@@ -188,11 +181,17 @@ if selected_question:
                     document_result["error"]
                 )
 
+                st.session_state["document_text"] = ""
+                st.session_state["questions"] = []
+                st.session_state["document_category"] = None
+
             else:
 
                 document_text = document_result["text"]
 
-                st.session_state["document_text"] = document_text
+                # ------------------------------------------------
+                # CHECK EXTRACTED TEXT
+                # ------------------------------------------------
 
                 if not document_text.strip():
 
@@ -201,40 +200,141 @@ if selected_question:
                         "from the uploaded document."
                     )
 
+                    st.session_state["document_text"] = ""
+                    st.session_state["questions"] = []
+                    st.session_state["document_category"] = None
+
                 else:
 
-                    # ----------------------------------------
-                    # GENERATE SOLUTION
-                    # ----------------------------------------
+                    # ------------------------------------------------
+                    # STORE DOCUMENT INFORMATION
+                    # ------------------------------------------------
 
-                    with st.spinner(
-                        "Generating solution..."
-                    ):
+                    st.session_state["document_text"] = (
+                        document_text
+                    )
 
-                        answer, sources = generate_answer(
-                            selected_question["question"],
-                            document_text,
-                        )
+                    st.session_state["document_category"] = (
+                        document_result["category"]
+                    )
+
+                    # ------------------------------------------------
+                    # EXTRACT QUESTIONS
+                    # ------------------------------------------------
+
+                    questions = extract_questions(
+                        document_text
+                    )
+
+                    st.session_state["questions"] = (
+                        questions
+                    )
+
+                    st.session_state["processed_filename"] = (
+                        uploaded_file.name
+                    )
+
+                    st.success(
+                        f"Document processed successfully "
+                        f"({document_result['category']})."
+                    )
 
         except Exception as e:
 
             st.error(
-                "Something went wrong while generating "
-                "the solution."
+                "Something went wrong while processing "
+                "the document."
             )
 
             st.exception(e)
 
         finally:
 
+            # ------------------------------------------------
+            # DELETE TEMPORARY FILE
+            # ------------------------------------------------
+
             if (
                 temp_file_path
                 and os.path.exists(temp_file_path)
             ):
-                os.remove(temp_file_path)
+
+                os.remove(
+                    temp_file_path
+                )
+
+else:
+
+    # Clear old document data if no file is uploaded.
+    st.session_state["document_text"] = ""
+    st.session_state["questions"] = []
+    st.session_state["processed_filename"] = None
+    st.session_state["document_category"] = None
+
+
+# ============================================================
+# QUESTION BANK
+# ============================================================
+
+questions = st.session_state.get(
+    "questions",
+    []
+)
+
+selected_question = render_question_bank(
+    questions
+)
+
+if selected_question:
+
+    st.session_state["selected_question"] = (
+        selected_question
+    )
+
+    # --------------------------------------------------------
+    # GENERATE SOLUTION FOR SELECTED QUESTION
+    # --------------------------------------------------------
+
+    document_text = st.session_state.get(
+        "document_text",
+        "",
+    )
+
+    if document_text:
+
+        with st.spinner(
+            "Generating solution..."
+        ):
+
+            answer, sources = generate_answer(
+                selected_question["question"],
+                document_text,
+            )
+
+        st.markdown(
+            '<div class="section-title">'
+            "🤖 Generated Solution"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
+        render_answer(
+            answer=answer
+        )
+
+        render_sources(
+            sources
+        )
+
+
+# ============================================================
+# ASK A QUESTION
+# ============================================================
 
 st.markdown(
-    '<div class="section-title">❓ Ask a Question</div>',
+    '<div class="section-title">'
+    "❓ Ask a Question"
+    "</div>",
     unsafe_allow_html=True,
 )
 
@@ -255,151 +355,79 @@ ask_button = st.button(
 
 
 # ============================================================
-# ANSWER + SOURCES
+# MANUAL QUESTION → RAG
 # ============================================================
-
-
-
 
 if ask_button:
 
-    # --------------------------------------------------------
-    # VALIDATION
-    # --------------------------------------------------------
-
     if not uploaded_file:
+
         st.warning(
             "Please upload an academic document first."
         )
 
     elif not question.strip():
+
         st.warning(
             "Please enter a question."
         )
 
     else:
 
-        temp_file_path = None
+        document_text = st.session_state.get(
+            "document_text",
+            "",
+        )
 
-        try:
-
-            # ------------------------------------------------
-            # STEP 1 — SAVE UPLOADED FILE TEMPORARILY
-            # ------------------------------------------------
-
-            with st.spinner(
-                "Processing your academic material..."
-            ):
-
-                suffix = Path(uploaded_file.name).suffix
-
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=suffix,
-                ) as temp_file:
-
-                    temp_file.write(
-                        uploaded_file.getbuffer()
-                    )
-
-                    temp_file_path = temp_file.name
-
-                # --------------------------------------------
-                # STEP 2 — MEMBER 2 DOCUMENT PROCESSOR
-                # --------------------------------------------
-
-                document_result = process_document(
-                    temp_file_path
-                )
-
-            # ------------------------------------------------
-            # STEP 3 — CHECK PROCESSING RESULT
-            # ------------------------------------------------
-
-            if "error" in document_result:
-
-                st.error(
-                    document_result["error"]
-                )
-
-            else:
-
-                document_text = document_result["text"]
-
-                st.session_state["document_text"] = document_text
-
-                if not document_text.strip():
-
-                    st.error(
-                        "No readable text could be extracted "
-                        "from the uploaded document."
-                    )
-
-                else:
-
-                    # ----------------------------------------
-                    # DOCUMENT INFORMATION
-                    # ----------------------------------------
-
-                    st.success(
-                        f"Document processed successfully "
-                        f"({document_result['category']})."
-                    )
-
-                    # ----------------------------------------
-                    # STEP 4 — MEMBER 1 RAG PIPELINE
-                    # ----------------------------------------
-
-                    with st.spinner(
-                        "Generating your answer..."
-                    ):
-
-                        answer, sources = generate_answer(
-                            question.strip(),
-                            document_text,
-                        )
-
-        except Exception as e:
+        if not document_text:
 
             st.error(
-                "Something went wrong while processing "
-                "your document or generating the answer."
+                "The uploaded document could not be processed."
             )
 
-            st.exception(e)
+        else:
 
-        finally:
+            try:
 
-            # ----------------------------------------------
-            # STEP 5 — DELETE TEMPORARY FILE
-            # ----------------------------------------------
+                with st.spinner(
+                    "Generating your answer..."
+                ):
 
-            if (
-                temp_file_path
-                and os.path.exists(temp_file_path)
-            ):
-                os.remove(temp_file_path)
+                    answer, sources = generate_answer(
+                        question.strip(),
+                        document_text,
+                    )
+
+                # --------------------------------------------
+                # ANSWER
+                # --------------------------------------------
+
+                render_answer(
+                    answer=answer
+                )
+
+                # --------------------------------------------
+                # SOURCES
+                # --------------------------------------------
+
+                render_sources(
+                    sources
+                )
+
+            except Exception as e:
+
+                st.error(
+                    "Something went wrong while generating "
+                    "the answer."
+                )
+
+                st.exception(e)
 
 
 # ============================================================
-# DISPLAY ANSWER
+# DEFAULT ANSWER AREA
 # ============================================================
 
-if answer:
-
-    render_answer(
-        answer=answer
-    )
-
-else:
+elif not selected_question:
 
     render_answer()
-
-
-# ============================================================
-# DISPLAY SOURCES
-# ============================================================
-
-render_sources(
-    sources
-)

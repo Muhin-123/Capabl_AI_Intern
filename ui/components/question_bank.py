@@ -15,10 +15,18 @@ def render_question_bank(questions=None):
         )
         return None
 
+    # --------------------------------------------------------
+    # QUESTION LABELS
+    # --------------------------------------------------------
+
     question_labels = [
-        f"Question {q['question_number']}"
+        f"{q['section']} - Q{q['question_number']}"
         for q in questions
     ]
+
+    # --------------------------------------------------------
+    # QUESTION SELECTION
+    # --------------------------------------------------------
 
     selected_label = st.selectbox(
         "Select a question",
@@ -28,20 +36,86 @@ def render_question_bank(questions=None):
     selected_question = next(
         q
         for q in questions
-        if f"Question {q['question_number']}" == selected_label
+        if (
+            f"{q['section']} - Q{q['question_number']}"
+            == selected_label
+        )
     )
 
-    st.markdown("### Question")
+    # --------------------------------------------------------
+    # QUESTION
+    # --------------------------------------------------------
 
-    st.write(selected_question["question"])
+    st.markdown(
+        '<div class="section-title">Question</div>',
+        unsafe_allow_html=True,
+    )
 
-    if selected_question.get("marks"):
+    st.write(
+        selected_question["question"]
+    )
+
+    # --------------------------------------------------------
+    # MARKS
+    # --------------------------------------------------------
+
+    st.caption(
+        f"Marks: {selected_question['marks']}"
+    )
+
+    # --------------------------------------------------------
+    # OPTIONS
+    # --------------------------------------------------------
+
+    options = selected_question.get(
+        "options",
+        {}
+    )
+
+    if options:
+
+        st.markdown("**Options:**")
+
+        for letter, option_text in options.items():
+
+            st.write(
+                f"**{letter}.** {option_text}"
+            )
+
+    # --------------------------------------------------------
+    # QUESTION TYPE
+    # --------------------------------------------------------
+
+    question_type = selected_question.get(
+        "type",
+        "unknown",
+    )
+
+    if question_type == "multiple_select":
+
         st.caption(
-            f"Marks: {selected_question['marks']}"
+            "Question type: Multiple Select"
         )
+
+    elif question_type == "numerical":
+
+        st.caption(
+            "Question type: Numerical Answer"
+        )
+
+    elif question_type == "mcq":
+
+        st.caption(
+            "Question type: Multiple Choice"
+        )
+
+    # --------------------------------------------------------
+    # GENERATE SOLUTION
+    # --------------------------------------------------------
 
     generate_button = st.button(
         "🧠 Generate Solution",
+        key=f"generate_{selected_question['id']}",
         type="primary",
     )
 

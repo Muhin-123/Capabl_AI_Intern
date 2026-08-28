@@ -75,7 +75,7 @@ def detect_document_type(file_path):
 
     else:
         return "Unsupported"
-def process_document(file_path):
+def process_document(file_path, original_filename=None):
 
     try:
         if file_path.lower().endswith(".pdf"):
@@ -103,7 +103,9 @@ def process_document(file_path):
                 "error": "The document is empty or contains no readable text"
             }
 
-        category = categorize_document(file_path)
+        category = categorize_document(
+            original_filename or file_path
+        )
 
         return {
             "filename": file_path,
@@ -120,10 +122,11 @@ def process_document(file_path):
             "text": "",
             "error": "The document could not be processed"
         }
-result = process_document("../samples/DBMS_Lecture.pptx")
+if __name__ == "__main__":
+    result = process_document("../samples/DBMS_Lecture.pptx")
 
-print("Filename:", result["filename"])
-print("File Type:", result["file_type"])
-print("Category:", result["category"])
-print("Text:")
-print(result["text"])
+    print("Filename:", result["filename"])
+    print("File Type:", result["file_type"])
+    print("Category:", result["category"])
+    print("Text:")
+    print(result["text"])
