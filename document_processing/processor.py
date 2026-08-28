@@ -42,47 +42,88 @@ def clean_text(text):
     text = " ".join(text.split())
     return text.strip()
 
-
 def categorize_document(file_path):
     filename = file_path.lower()
 
     if "question" in filename or "qp" in filename:
-        return "questions"
+        return "Question Paper"
 
     elif "lab" in filename or "manual" in filename:
-        return "lab"
+        return "Lab Manual"
 
     elif "textbook" in filename or "book" in filename:
-        return "textbook"
+        return "Textbook"
 
     elif "note" in filename or "lecture" in filename:
-        return "notes"
+        return "Notes"
 
     else:
-        return "general"
+        return "General"
 
 
+def detect_document_type(file_path):
+    filename = file_path.lower()
+
+    if filename.endswith(".pdf"):
+        return "PDF"
+
+    elif filename.endswith(".docx"):
+        return "DOCX"
+
+    elif filename.endswith(".pptx"):
+        return "PPTX"
+
+    else:
+        return "Unsupported"
 def process_document(file_path):
 
-    if file_path.lower().endswith(".pdf"):
-        text = extract_pdf(file_path)
+    try:
+        if file_path.lower().endswith(".pdf"):
+            text = extract_pdf(file_path)
 
-    elif file_path.lower().endswith(".docx"):
-        text = extract_docx(file_path)
+        elif file_path.lower().endswith(".docx"):
+            text = extract_docx(file_path)
 
-    elif file_path.lower().endswith(".pptx"):
-        text = extract_pptx(file_path)
+        elif file_path.lower().endswith(".pptx"):
+            text = extract_pptx(file_path)
 
-    else:
+        else:
+            return {
+                "error": "Unsupported file type"
+            }
+
+        text = clean_text(text)
+
+        if not text:
+            return {
+                "filename": file_path,
+                "file_type": detect_document_type(file_path),
+                "category": "Unknown",
+                "text": "",
+                "error": "The document is empty or contains no readable text"
+            }
+
+        category = categorize_document(file_path)
+
         return {
-            "error": "Unsupported file type"
+            "filename": file_path,
+            "file_type": detect_document_type(file_path),
+            "category": category,
+            "text": text
         }
 
-    text = clean_text(text)
-    category = categorize_document(file_path)
+    except Exception as e:
+        return {
+            "filename": file_path,
+            "file_type": detect_document_type(file_path),
+            "category": "Unknown",
+            "text": "",
+            "error": "The document could not be processed"
+        }
+result = process_document("../samples/DBMS_Lecture.pptx")
 
-    return {
-        "filename": file_path,
-        "category": category,
-        "text": text
-    }
+print("Filename:", result["filename"])
+print("File Type:", result["file_type"])
+print("Category:", result["category"])
+print("Text:")
+print(result["text"])
