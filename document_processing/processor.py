@@ -45,7 +45,7 @@ def clean_text(text):
 def categorize_document(file_path):
     filename = file_path.lower()
 
-    if "question" in filename or "qp" in filename:
+    if "question" in filename or "qp" in filename or "question bank" in filename:
         return "Question Paper"
 
     elif "lab" in filename or "manual" in filename:
@@ -120,7 +120,7 @@ def process_document(file_path):
             "text": "",
             "error": "The document could not be processed"
         }
-result = process_document("../samples/DBMS_Lecture.pptx")
+result = process_document("../samples/Question Bank for Comprehensive Engineering Aptitude Test.pdf")
 
 print("Filename:", result["filename"])
 print("File Type:", result["file_type"])
