@@ -5,18 +5,17 @@ from rag.llm import get_llm
 def generate_answer(
     question: str,
     document_text: str,
-    question_type: str = "theory",
-    options: dict | None = None,
-    marks: int | None = None,
+    question_type=None,
+    options=None,
+    marks=None,
+    document_metadata=None,
+    content_units=None,
 ):
     """
-    Generate an academic answer using the RAG pipeline.
+    Generate an answer using retrieved academic context.
 
-    question_type can be:
-        - mcq
-        - multiple_select
-        - numerical
-        - theory
+    Metadata and page/slide information are preserved
+    throughout the RAG pipeline.
     """
 
     # ========================================================
@@ -24,57 +23,60 @@ def generate_answer(
     # ========================================================
 
     documents = retrieve_documents(
-        question,
-        document_text,
+        question=question,
+        document_text=document_text,
         k=3,
+        metadata=document_metadata,
+        content_units=content_units,
     )
 
     # ========================================================
     # STEP 2 — COMBINE RETRIEVED CONTEXT
     # ========================================================
 
+    context_parts = []
+
+    for document in documents:
+
+        context_parts.append(
+            document.page_content
+        )
+
     context = "\n\n".join(
-        document.page_content
-        for document in documents
+        context_parts
     )
 
     # ========================================================
-    # STEP 3 — PREPARE QUESTION INFORMATION
+    # STEP 3 — GET GEMINI
     # ========================================================
 
-    question_information = question
-
-    if options:
-        question_information += "\n\nOPTIONS:\n"
-
-        for letter, option_text in options.items():
-            question_information += (
-                f"{letter}. {option_text}\n"
-            )
+    llm = get_llm()
 
     # ========================================================
-    # STEP 4 — SELECT PROMPT BASED ON QUESTION TYPE
+    # STEP 4 — QUESTION TYPE INSTRUCTIONS
     # ========================================================
 
-    if question_type == "mcq":
+    task_instruction = ""
+
+    if question_type == "numerical":
 
         task_instruction = """
-This is a Multiple Choice Question.
+This is a Numerical Answer Type Question.
 
-Analyze the question and the provided options.
+Solve the problem using ONLY the academic context.
 
-If the uploaded academic context contains enough
-information to determine the answer:
+If the context contains enough information:
 
-1. Identify the correct option.
-2. State the option clearly.
-3. Explain why it is correct.
-4. Briefly explain why the other options are incorrect
-   when the context supports doing so.
+1. Identify the relevant values and formulas.
+2. Show the calculation step by step.
+3. Explain the reasoning clearly.
+4. Give the final numerical answer clearly.
 
-Do not guess when essential information is genuinely
-missing. Use the information in the question and options
-together with relevant academic reasoning.
+Do not invent missing values or formulas.
+
+If the context does not contain enough information,
+clearly state that the uploaded material does not
+contain enough information.
 """
 
     elif question_type == "multiple_select":
@@ -82,109 +84,70 @@ together with relevant academic reasoning.
         task_instruction = """
 This is a Multiple Select Question.
 
-Analyze all of the provided options.
+Determine the correct options using ONLY the academic
+context.
 
-Use the retrieved academic context together with the
-information explicitly provided in the question and
-standard academic reasoning.
+Do not guess the correct options if the context does
+not contain enough information.
 
-1. Identify ALL correct options.
-2. Clearly list the correct option letters.
-3. Explain why each selected option is correct.
-4. Explain why the remaining options are incorrect when
-   appropriate.
-
-Do not guess when essential information is genuinely
-missing. If the question cannot be determined reliably,
-clearly explain what information is missing.
+Explain why the selected options are correct.
 """
-    elif question_type == "numerical":
+
+    elif question_type == "mcq":
 
         task_instruction = """
-This is a Numerical Answer Type Question.
+This is a Multiple Choice Question.
 
-Solve the problem carefully using the information provided
-in the question, the retrieved academic context, and
-standard academic reasoning.
+Determine the correct option using ONLY the academic
+context.
 
-1. Identify the relevant values and given information.
-2. Identify the appropriate formula, algorithm, or method.
-3. Show the calculation or reasoning step by step.
-4. Explain the reasoning clearly.
-5. Give the final numerical answer clearly.
+Do not guess the correct option if the context does
+not contain enough information.
 
-You may use standard mathematical formulas, algorithms,
-and methods even if they are not explicitly written in
-the uploaded document, provided they are directly
-applicable to the question.
-
-Do not invent missing values or unsupported assumptions.
-
-If essential information needed to solve the problem is
-genuinely missing, clearly state what information is
-missing instead of guessing.
+Explain the answer clearly.
 """
 
     else:
 
         task_instruction = """
-This is an academic/theoretical question.
+Answer the question using ONLY the academic context.
 
-Answer the question clearly using the provided context.
+If the context contains enough information, explain
+the answer clearly and academically.
 
-Explain the relevant concepts and give examples when
-the context supports them.
-
-Do not introduce unsupported facts.
+If the context does not contain enough information,
+clearly state that the uploaded material does not
+contain enough information.
 """
 
     # ========================================================
-    # STEP 5 — BUILD RAG PROMPT
+    # STEP 5 — RAG PROMPT
     # ========================================================
 
     prompt = f"""
 You are an academic AI assistant.
 
-Your task is to answer the student's question using ONLY
-the academic context retrieved from the uploaded document.
-
 IMPORTANT RULES:
 
-- Use the retrieved academic context as the primary source.
-- Use the information explicitly provided in the question
-  and options when solving the problem.
-- You may apply standard academic reasoning, calculations,
-  and logical deductions to the provided information.
-- Do not invent facts, values, definitions, or claims.
-- You may use standard academic formulas, algorithms,
-  mathematical methods, and logical reasoning when they
-  are directly applicable to the information given in the
-  question.
-- Do not invent missing values or make unsupported
-  assumptions.
-- Do not claim that information came from the uploaded
-  document if it was derived through reasoning.
-- If essential information is genuinely missing, clearly
-  state what information is missing.
+- Use ONLY the academic context provided below.
+- The academic context is the only allowed source of facts.
+- Do NOT use general knowledge outside the provided context.
+- Do NOT introduce unsupported facts, formulas, values,
+  assumptions, or calculations.
+- Do NOT guess when the context is insufficient.
+- If the context does not contain enough information,
+  clearly say that the uploaded material does not contain
+  enough information to answer the question.
 - Give a clear and academically appropriate answer.
 - Respect the question type.
-- If the question has options, consider the options as part
-  of the question.
 
-QUESTION TYPE:
-{question_type}
-
-MARKS:
-{marks if marks is not None else "Not specified"}
-
-QUESTION:
-{question_information}
-
-QUESTION-SPECIFIC INSTRUCTIONS:
 {task_instruction}
 
 ACADEMIC CONTEXT:
 {context}
+
+STUDENT QUESTION:
+{question}
 
 ANSWER:
 """
@@ -193,24 +156,29 @@ ANSWER:
     # STEP 6 — GENERATE ANSWER
     # ========================================================
 
-    llm = get_llm()
+    response = llm.invoke(
+        prompt
+    )
 
-    response = llm.invoke(prompt)
-
-    # ========================================================
-    # STEP 7 — EXTRACT RESPONSE TEXT
-    # ========================================================
-
-    if isinstance(response.content, str):
+    if isinstance(
+        response.content,
+        str,
+    ):
 
         answer = response.content
 
     else:
 
         answer = "".join(
-            block.get("text", "")
+            block.get(
+                "text",
+                "",
+            )
             for block in response.content
-            if isinstance(block, dict)
+            if isinstance(
+                block,
+                dict,
+            )
         )
 
     return answer, documents
@@ -222,34 +190,58 @@ ANSWER:
 
 if __name__ == "__main__":
 
-    question = "What is Second Normal Form?"
+    question = (
+        "What is Second Normal Form?"
+    )
 
     document_text = """
-    Second Normal Form (2NF) requires a table to be in
-    First Normal Form and removes partial dependency.
+    Second Normal Form (2NF) requires a table to be
+    in First Normal Form and removes partial dependency.
     """
 
     answer, sources = generate_answer(
-        question,
-        document_text,
-        question_type="theory",
+        question=question,
+        document_text=document_text,
     )
 
-    print("\n==============================")
+    print(
+        "\n=============================="
+    )
+
     print("ANSWER")
-    print("==============================\n")
+
+    print(
+        "==============================\n"
+    )
 
     print(answer)
 
-    print("\n==============================")
+    print(
+        "\n=============================="
+    )
+
     print("SOURCES")
-    print("==============================\n")
+
+    print(
+        "==============================\n"
+    )
 
     for i, document in enumerate(
         sources,
         start=1,
     ):
 
-        print(f"--- Source {i} ---")
-        print(document.page_content)
+        print(
+            f"--- Source {i} ---"
+        )
+
+        print(
+            document.page_content
+        )
+
+        print(
+            "Metadata:",
+            document.metadata,
+        )
+
         print()

@@ -122,6 +122,15 @@ if "processed_filename" not in st.session_state:
 if "document_category" not in st.session_state:
     st.session_state["document_category"] = None
 
+if "document_metadata" not in st.session_state:
+    st.session_state["document_metadata"] = {}
+
+if "content_units" not in st.session_state:
+    st.session_state["content_units"] = []
+
+if "selected_question" not in st.session_state:
+    st.session_state["selected_question"] = None
+
 
 # ============================================================
 # PROCESS UPLOADED DOCUMENT
@@ -169,6 +178,8 @@ if uploaded_file:
                 document_result = process_document(
                     temp_file_path,
                     uploaded_file.name,
+                    subject=subject,
+                    topic=topic,
                 )
 
             # ----------------------------------------------------
@@ -184,10 +195,16 @@ if uploaded_file:
                 st.session_state["document_text"] = ""
                 st.session_state["questions"] = []
                 st.session_state["document_category"] = None
+                st.session_state["document_metadata"] = {}
+                st.session_state["content_units"] = []
+                st.session_state["selected_question"] = None
 
             else:
 
-                document_text = document_result["text"]
+                document_text = document_result.get(
+                    "text",
+                    "",
+                )
 
                 # ------------------------------------------------
                 # CHECK EXTRACTED TEXT
@@ -203,6 +220,9 @@ if uploaded_file:
                     st.session_state["document_text"] = ""
                     st.session_state["questions"] = []
                     st.session_state["document_category"] = None
+                    st.session_state["document_metadata"] = {}
+                    st.session_state["content_units"] = []
+                    st.session_state["selected_question"] = None
 
                 else:
 
@@ -215,7 +235,24 @@ if uploaded_file:
                     )
 
                     st.session_state["document_category"] = (
-                        document_result["category"]
+                        document_result.get(
+                            "category",
+                            "General",
+                        )
+                    )
+
+                    st.session_state["document_metadata"] = (
+                        document_result.get(
+                            "metadata",
+                            {},
+                        )
+                    )
+
+                    st.session_state["content_units"] = (
+                        document_result.get(
+                            "content_units",
+                            [],
+                        )
                     )
 
                     # ------------------------------------------------
@@ -234,9 +271,11 @@ if uploaded_file:
                         uploaded_file.name
                     )
 
+                    st.session_state["selected_question"] = None
+
                     st.success(
                         f"Document processed successfully "
-                        f"({document_result['category']})."
+                        f"({document_result.get('category', 'General')})."
                     )
 
         except Exception as e:
@@ -247,6 +286,14 @@ if uploaded_file:
             )
 
             st.exception(e)
+
+            # Clear invalid document state.
+            st.session_state["document_text"] = ""
+            st.session_state["questions"] = []
+            st.session_state["document_category"] = None
+            st.session_state["document_metadata"] = {}
+            st.session_state["content_units"] = []
+            st.session_state["selected_question"] = None
 
         finally:
 
@@ -265,11 +312,17 @@ if uploaded_file:
 
 else:
 
-    # Clear old document data if no file is uploaded.
+    # ========================================================
+    # CLEAR OLD DOCUMENT DATA
+    # ========================================================
+
     st.session_state["document_text"] = ""
     st.session_state["questions"] = []
     st.session_state["processed_filename"] = None
     st.session_state["document_category"] = None
+    st.session_state["document_metadata"] = {}
+    st.session_state["content_units"] = []
+    st.session_state["selected_question"] = None
 
 
 # ============================================================
@@ -307,12 +360,28 @@ if selected_question:
         ):
 
             answer, sources = generate_answer(
-    question=selected_question["question"],
-    document_text=document_text,
-    question_type=selected_question.get("type", "theory"),
-    options=selected_question.get("options", {}),
-    marks=selected_question.get("marks"),
-    )
+                question=selected_question["question"],
+                document_text=document_text,
+                question_type=selected_question.get(
+                    "type",
+                    "theory",
+                ),
+                options=selected_question.get(
+                    "options",
+                    {},
+                ),
+                marks=selected_question.get(
+                    "marks",
+                ),
+                document_metadata=st.session_state.get(
+                    "document_metadata",
+                    {},
+                ),
+                content_units=st.session_state.get(
+                    "content_units",
+                    [],
+                ),
+            )
 
         st.markdown(
             '<div class="section-title">'
@@ -397,8 +466,16 @@ if ask_button:
                 ):
 
                     answer, sources = generate_answer(
-                        question.strip(),
-                        document_text,
+                        question=question.strip(),
+                        document_text=document_text,
+                        document_metadata=st.session_state.get(
+                            "document_metadata",
+                            {},
+                        ),
+                        content_units=st.session_state.get(
+                            "content_units",
+                            [],
+                        ),
                     )
 
                 # --------------------------------------------
