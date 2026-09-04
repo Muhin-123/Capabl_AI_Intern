@@ -23,7 +23,7 @@ from components.sidebar import render_sidebar
 from components.answer import render_answer
 from components.sources import render_sources
 from components.question_bank import render_question_bank
-
+from ui.components.learning import render_learning_interface
 from document_processing.processor import process_document
 from document_processing.question_extractor import extract_questions
 
@@ -103,8 +103,7 @@ st.divider()
 # SIDEBAR
 # ============================================================
 
-uploaded_file, subject, topic = render_sidebar()
-
+uploaded_file, subject, chapter, topic = render_sidebar()
 
 # ============================================================
 # SESSION STATE
@@ -397,7 +396,18 @@ if selected_question:
         render_sources(
             sources
         )
+# ============================================================
+# LEARNING INTERFACE
+# ============================================================
 
+learning_request = render_learning_interface(
+    subject=subject,
+    chapter=chapter,
+    topic=topic,
+    document_text=st.session_state.get("document_text"),
+    document_metadata=st.session_state.get("document_metadata"),
+    content_units=st.session_state.get("content_units"),
+)
 
 # ============================================================
 # ASK A QUESTION

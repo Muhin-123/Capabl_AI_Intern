@@ -2,7 +2,7 @@ import streamlit as st
 
 
 def render_sidebar():
-    """Render the document and academic details sidebar."""
+    """Render the document and learning configuration sidebar."""
 
     with st.sidebar:
 
@@ -37,19 +37,52 @@ def render_sidebar():
         st.divider()
 
         # ----------------------------------------------------
-        # ACADEMIC DETAILS
+        # LEARNING DETAILS
         # ----------------------------------------------------
 
-        st.header("📖 Academic Details")
+        st.header("📖 Learning Details")
 
         subject = st.text_input(
             "Subject",
             placeholder="e.g. Database Systems",
         )
 
+        chapter = st.text_input(
+            "Chapter",
+            placeholder="e.g. Chapter 3 - Normalization",
+        )
+
         topic = st.text_input(
             "Topic",
-            placeholder="e.g. Normalization",
+            placeholder="e.g. 3NF and BCNF",
+        )
+
+        st.divider()
+
+        # ----------------------------------------------------
+        # LEARNING FLOW
+        # ----------------------------------------------------
+
+        st.subheader("🎓 Learning Path")
+
+        st.markdown(
+            f"""
+            **Subject**
+
+            {subject if subject else "Not selected"}
+
+            ↓
+
+            **Chapter**
+
+            {chapter if chapter else "Not selected"}
+
+            ↓
+
+            **Topic**
+
+            {topic if topic else "Not selected"}
+            """
         )
 
         st.divider()
@@ -61,8 +94,8 @@ def render_sidebar():
         st.subheader("⚡ Status")
 
         if uploaded_file:
-            st.success("Document ready for questions.")
+            st.success("Document ready for learning.")
         else:
             st.warning("Waiting for a document.")
 
-    return uploaded_file, subject, topic
+    return uploaded_file, subject, chapter, topic
