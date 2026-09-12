@@ -4,7 +4,7 @@ from pptx import Presentation
 import os
 import re
 
-from classifier import classify_document
+from .classifier import classify_document
 
 
 def extract_pdf(file_path):
