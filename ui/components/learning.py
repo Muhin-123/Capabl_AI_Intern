@@ -5,16 +5,17 @@ from rag.pipeline import generate_learning_content
 
 def render_learning_interface(
     subject=None,
+    programming_language=None,
     chapter=None,
     topic=None,
     document_text=None,
     document_metadata=None,
     content_units=None,
 ):
-    """Render the Week 3 topic-based learning interface."""
+    """Render the Week 5 programming-focused learning interface."""
 
     st.markdown(
-        '<div class="section-title">🎓 Learn a Topic</div>',
+        '<div class="section-title">💻 Programming Learning</div>',
         unsafe_allow_html=True,
     )
 
@@ -24,6 +25,12 @@ def render_learning_interface(
 
     if subject:
         st.caption(f"📖 Subject: {subject}")
+
+    if programming_language:
+        st.caption(
+            f"💻 Programming Language: "
+            f"{programming_language}"
+        )
 
     if chapter:
         st.caption(f"📚 Chapter: {chapter}")
@@ -49,6 +56,12 @@ def render_learning_interface(
         )
         return None
 
+    if not programming_language:
+        st.info(
+            "Select a programming language in the sidebar."
+        )
+        return None
+
     if not chapter:
         st.info(
             "Enter a chapter in the sidebar to continue."
@@ -62,16 +75,41 @@ def render_learning_interface(
         return None
 
     # ----------------------------------------------------
-    # LEARN BUTTON
+    # PROGRAMMING QUESTION
     # ----------------------------------------------------
 
-    learn_button = st.button(
-        "🚀 Learn This Topic",
+    st.markdown("### 🧑‍💻 Programming Question")
+
+    programming_question = st.text_area(
+    "What programming problem would you like to understand?",
+    placeholder=(
+        "Example: Explain binary search and "
+        "show a Python implementation."
+    ),
+    height=140,
+    help=(
+        "Ask about an algorithm, data structure, "
+        "programming concept, or coding problem."
+    ),
+)
+
+    # ----------------------------------------------------
+    # GENERATE BUTTON
+    # ----------------------------------------------------
+
+    generate_button = st.button(
+        "🚀 Generate Programming Solution",
         type="primary",
         use_container_width=True,
     )
 
-    if not learn_button:
+    if not generate_button:
+        return None
+
+    if not programming_question.strip():
+        st.warning(
+            "Please enter a programming question."
+        )
         return None
 
     # ----------------------------------------------------
@@ -79,7 +117,7 @@ def render_learning_interface(
     # ----------------------------------------------------
 
     with st.spinner(
-        "🧠 Generating your learning material..."
+        "🧠 Generating your programming solution..."
     ):
 
         try:
@@ -87,30 +125,65 @@ def render_learning_interface(
             learning_content, sources = (
                 generate_learning_content(
                     subject=subject,
+                    programming_language=programming_language,
                     chapter=chapter,
                     topic=topic,
+                    programming_question=programming_question,
                     document_text=document_text,
                     document_metadata=document_metadata,
                     content_units=content_units,
-                )
+                 )
             )
 
         except Exception as e:
 
             st.error(
-                f"Unable to generate learning content: {e}"
+                "Unable to generate programming content."
             )
 
+            st.exception(e)
+
             return None
+    st.success("✅ Programming solution generated successfully.")
+# ----------------------------------------------------
+# CODE
+# ----------------------------------------------------
+
+code = learning_content.get(
+    "code",
+    "",
+)
+
+st.markdown("### 💻 Code")
+
+code_language = {
+    "Python": "python",
+    "C": "c",
+    "C++": "cpp",
+    "Java": "java",
+    "JavaScript": "javascript",
+}.get(programming_language, "text")
+
+if code:
+    st.code(
+        code,
+        language=code_language,
+    )
+else:
+    st.info(
+        "Code will appear here when the programming "
+        "solution is generated."
+    )
 
     # ----------------------------------------------------
     # EXPLANATION
     # ----------------------------------------------------
 
-    st.markdown("### 📘 Explanation")
+    st.markdown("### 🤖 Explanation")
 
     explanation = learning_content.get(
-        "explanation"
+        "explanation",
+        "",
     )
 
     if explanation:
@@ -124,18 +197,16 @@ def render_learning_interface(
     # EXAMPLE
     # ----------------------------------------------------
 
-    st.markdown("### 💡 Example")
-
     example = learning_content.get(
-        "example"
+        "example",
+        "",
     )
 
     if example:
+
+        st.markdown("### 💡 Example")
+
         st.write(example)
-    else:
-        st.info(
-            "No example was generated."
-        )
 
     # ----------------------------------------------------
     # PRACTICE QUESTION
@@ -144,7 +215,8 @@ def render_learning_interface(
     st.markdown("### 📝 Practice Question")
 
     practice_question = learning_content.get(
-        "practice_question"
+        "practice_question",
+        "",
     )
 
     if practice_question:
@@ -159,9 +231,13 @@ def render_learning_interface(
     # ----------------------------------------------------
 
     if sources:
+
         st.markdown("### 🔎 Learning Sources")
 
-        for i, source in enumerate(sources, start=1):
+        for i, source in enumerate(
+            sources,
+            start=1,
+        ):
 
             metadata = getattr(
                 source,
@@ -213,7 +289,9 @@ def render_learning_interface(
                     f"📊 Slide: {slide}"
                 )
 
-            with st.expander("View source content"):
+            with st.expander(
+                "View source content"
+            ):
                 st.write(
                     source.page_content
                 )
@@ -224,8 +302,10 @@ def render_learning_interface(
 
     return {
         "subject": subject,
+        "programming_language": programming_language,
         "chapter": chapter,
         "topic": topic,
+        "question": programming_question,
         "learning_content": learning_content,
         "sources": sources,
     }

@@ -103,8 +103,7 @@ st.divider()
 # SIDEBAR
 # ============================================================
 
-uploaded_file, subject, chapter, topic = render_sidebar()
-
+uploaded_file, subject, programming_language, chapter, topic = render_sidebar()
 # ============================================================
 # SESSION STATE
 # ============================================================
@@ -177,8 +176,6 @@ if uploaded_file:
                 document_result = process_document(
                     temp_file_path,
                     uploaded_file.name,
-                    subject=subject,
-                    topic=topic,
                 )
 
             # ----------------------------------------------------
@@ -396,17 +393,25 @@ if selected_question:
         render_sources(
             sources
         )
+
 # ============================================================
 # LEARNING INTERFACE
 # ============================================================
 
 learning_request = render_learning_interface(
     subject=subject,
+    programming_language=programming_language,
     chapter=chapter,
     topic=topic,
-    document_text=st.session_state.get("document_text"),
-    document_metadata=st.session_state.get("document_metadata"),
-    content_units=st.session_state.get("content_units"),
+    document_text=st.session_state.get(
+        "document_text"
+    ),
+    document_metadata=st.session_state.get(
+        "document_metadata"
+    ),
+    content_units=st.session_state.get(
+        "content_units"
+    ),
 )
 
 # ============================================================

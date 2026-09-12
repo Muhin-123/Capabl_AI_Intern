@@ -2,7 +2,7 @@ import streamlit as st
 
 
 def render_sidebar():
-    """Render the document and learning configuration sidebar."""
+    """Render the document and programming learning configuration sidebar."""
 
     with st.sidebar:
 
@@ -44,17 +44,31 @@ def render_sidebar():
 
         subject = st.text_input(
             "Subject",
-            placeholder="e.g. Database Systems",
+            placeholder="e.g. Data Structures",
+        )
+
+        programming_language = st.selectbox(
+            "Programming Language",
+            [
+                "Python",
+                "C",
+                "C++",
+                "Java",
+                "JavaScript",
+                "Other",
+            ],
+            index=None,
+            placeholder="Select a programming language",
         )
 
         chapter = st.text_input(
             "Chapter",
-            placeholder="e.g. Chapter 3 - Normalization",
+            placeholder="e.g. Searching Algorithms",
         )
 
         topic = st.text_input(
             "Topic",
-            placeholder="e.g. 3NF and BCNF",
+            placeholder="e.g. Binary Search",
         )
 
         st.divider()
@@ -70,6 +84,16 @@ def render_sidebar():
             **Subject**
 
             {subject if subject else "Not selected"}
+
+            ↓
+
+            **Language**
+
+            {
+                programming_language
+                if programming_language
+                else "Not selected"
+            }
 
             ↓
 
@@ -98,4 +122,10 @@ def render_sidebar():
         else:
             st.warning("Waiting for a document.")
 
-    return uploaded_file, subject, chapter, topic
+    return (
+        uploaded_file,
+        subject,
+        programming_language,
+        chapter,
+        topic,
+    )
