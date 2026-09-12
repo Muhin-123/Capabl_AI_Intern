@@ -1,8 +1,6 @@
-import os
 import re
 
 
-# Subject-level keywords
 SUBJECT_KEYWORDS = {
     "DBMS": [
         "database management system",
@@ -12,13 +10,103 @@ SUBJECT_KEYWORDS = {
         "relational database",
         "sql",
         "database",
-    ]
+        "mysql",
+        "postgresql",
+        "oracle",
+        "normalization",
+        "primary key",
+        "foreign key",
+        "er diagram",
+        "transaction",
+    ],
+
+    "Data Structures and Algorithms": [
+        "data structure",
+        "algorithm",
+        "array",
+        "linked list",
+        "stack",
+        "queue",
+        "tree",
+        "binary tree",
+        "graph",
+        "sorting",
+        "searching",
+        "recursion",
+    ],
+
+    "Operating Systems": [
+        "operating system",
+        "process",
+        "thread",
+        "deadlock",
+        "cpu scheduling",
+        "process scheduling",
+        "memory management",
+        "paging",
+        "segmentation",
+        "virtual memory",
+        "file system",
+    ],
+
+    "Computer Networks": [
+        "computer network",
+        "networking",
+        "tcp",
+        "udp",
+        "ip address",
+        "routing",
+        "osi model",
+        "tcp/ip",
+        "subnetting",
+        "network protocol",
+        "ethernet",
+    ],
+
+    "Aptitude": [
+        "aptitude",
+        "quantitative aptitude",
+        "logical reasoning",
+        "verbal ability",
+        "engineering aptitude",
+        "comprehensive engineering aptitude",
+        "percentage",
+        "profit and loss",
+        "ratio",
+        "proportion",
+        "time and work",
+        "probability",
+        "permutation",
+        "combination",
+        "number system",
+    ],
+
+    "Artificial Intelligence and Machine Learning": [
+        "artificial intelligence",
+        "machine learning",
+        "deep learning",
+        "neural network",
+        "cnn",
+        "rnn",
+        "classification",
+        "regression",
+        "supervised learning",
+        "unsupervised learning",
+        "computer vision",
+    ],
 }
 
 
-# Chapter and topic keywords based on the DBMS study materials
 CHAPTER_TOPICS = {
     "Chapter 1: Database System Architecture": {
+        "Introduction to DBMS": [
+            "introduction of dbms",
+            "introduction to dbms",
+            "database management system",
+            "applications of dbms",
+            "advantages of dbms",
+        ],
+
         "Database System Architecture": [
             "database system architecture",
             "three level architecture",
@@ -26,33 +114,37 @@ CHAPTER_TOPICS = {
             "ansi sparc",
             "ansi-sparc",
         ],
-        "Introduction to DBMS": [
-            "introduction to dbms",
-            "database management system",
-            "applications of dbms",
-            "advantages of dbms",
-        ],
+
         "Data Abstraction": [
             "data abstraction",
             "physical level",
             "logical level",
             "view level",
         ],
+
         "Data Independence": [
             "data independence",
             "physical data independence",
             "logical data independence",
         ],
+
         "Database Users": [
             "database users",
+            "types of database users",
+            "naive users",
             "end users",
             "application programmers",
+            "sophisticated users",
+            "specialized users",
         ],
+
         "Database Administrator": [
             "database administrator",
             "dba",
-            "dba role",
+            "role of dba",
+            "roles of dba",
             "dba responsibilities",
+            "tasks of dba",
         ],
     },
 
@@ -64,17 +156,20 @@ CHAPTER_TOPICS = {
             "er diagram",
             "erd",
         ],
+
         "Entities and Attributes": [
             "entity",
             "entities",
             "attribute",
             "attributes",
         ],
+
         "Relationships": [
             "relationship",
             "relationships",
             "relationship set",
         ],
+
         "Mapping Cardinality": [
             "mapping cardinality",
             "cardinality",
@@ -87,17 +182,21 @@ CHAPTER_TOPICS = {
             "many to many",
             "many-to-many",
         ],
+
         "Weak Entities": [
             "weak entity",
             "weak entities",
         ],
+
         "Specialization and Generalization": [
             "specialization",
             "generalization",
         ],
+
         "Aggregation": [
             "aggregation",
         ],
+
         "Database Models": [
             "hierarchical model",
             "network model",
@@ -111,12 +210,11 @@ CHAPTER_TOPICS = {
     "Chapter 3: Relational Model": {
         "Relational Algebra": [
             "relational algebra",
-            "selection",
-            "projection",
-            "union",
-            "intersection",
+            "selection operation",
+            "projection operation",
             "cartesian product",
         ],
+
         "Keys": [
             "primary key",
             "foreign key",
@@ -124,18 +222,21 @@ CHAPTER_TOPICS = {
             "super key",
             "composite key",
         ],
+
         "Integrity Constraints": [
             "integrity constraint",
             "integrity constraints",
             "referential integrity",
             "entity integrity",
         ],
-        "Joins": [
-            "join",
-            "joins",
+
+        "Join Operation": [
+            "join operation",
             "natural join",
             "outer join",
             "inner join",
+            "left outer join",
+            "right outer join",
         ],
     },
 
@@ -144,15 +245,18 @@ CHAPTER_TOPICS = {
             "functional dependency",
             "functional dependencies",
         ],
+
         "Armstrong's Axioms": [
             "armstrong",
             "armstrong's axioms",
             "armstrong axioms",
         ],
+
         "Attribute Closure": [
             "attribute closure",
             "closure of attribute",
         ],
+
         "Normalization": [
             "normalization",
             "normal forms",
@@ -163,6 +267,7 @@ CHAPTER_TOPICS = {
             "4nf",
             "5nf",
         ],
+
         "Decomposition": [
             "decomposition",
             "lossless decomposition",
@@ -174,29 +279,34 @@ CHAPTER_TOPICS = {
     "Chapter 5: SQL": {
         "SQL": [
             "structured query language",
-            "sql",
             "sql query",
+            "sql statement",
         ],
+
         "DDL and DML": [
             "ddl",
             "dml",
             "data definition language",
             "data manipulation language",
         ],
+
         "SQL Queries": [
             "select statement",
             "select query",
-            "insert",
-            "update",
-            "delete",
+            "insert into",
+            "update statement",
+            "delete statement",
             "where clause",
             "group by",
             "order by",
         ],
+
         "Triggers": [
             "trigger",
             "triggers",
+            "database trigger",
         ],
+
         "PL/SQL": [
             "pl/sql",
             "plsql",
@@ -208,33 +318,39 @@ CHAPTER_TOPICS = {
 
     "Chapter 6: Transactions": {
         "Transactions": [
-            "transaction",
-            "transactions",
             "transaction management",
+            "transaction processing",
+            "transaction schedule",
         ],
+
         "ACID Properties": [
-            "acid",
+            "acid properties",
             "atomicity",
             "consistency",
             "isolation",
             "durability",
         ],
+
         "Serializability": [
             "serializability",
             "serial schedule",
             "conflict serializability",
             "view serializability",
         ],
+
         "Locks": [
-            "lock",
-            "locks",
             "shared lock",
             "exclusive lock",
+            "lock based protocol",
+            "two phase locking",
         ],
+
         "Deadlocks": [
             "deadlock",
             "deadlocks",
+            "deadlock detection",
         ],
+
         "Concurrency Control": [
             "concurrency control",
             "concurrent execution",
@@ -247,48 +363,58 @@ CHAPTER_TOPICS = {
             "hash function",
             "hash file organization",
         ],
+
         "B-Trees and B+ Trees": [
             "b-tree",
             "b trees",
             "b+ tree",
             "b+ trees",
         ],
+
         "Indexing": [
             "indexing",
-            "index",
             "primary index",
             "secondary index",
+            "dense index",
+            "sparse index",
         ],
+
         "Query Processing": [
             "query processing",
             "query processor",
             "query optimization",
         ],
+
         "Recovery": [
-            "recovery",
             "database recovery",
             "log based recovery",
             "checkpoint",
+            "recovery techniques",
         ],
     },
 }
 
 
 def normalize_text(text):
-    """Normalize text for keyword matching."""
     text = text.lower()
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
 def classify_subject(text, filename=""):
-    """
-    Identify the subject using document content and filename.
-    """
-
     combined_text = normalize_text(
         f"{filename} {text}"
     )
+
+    # Give clear Aptitude documents priority.
+    if (
+        "aptitude" in combined_text
+        or "comprehensive engineering aptitude test" in combined_text
+        or "quantitative aptitude" in combined_text
+        or "logical reasoning" in combined_text
+        or "verbal aptitude" in combined_text
+    ):
+        return "Aptitude"
 
     scores = {}
 
@@ -296,7 +422,7 @@ def classify_subject(text, filename=""):
         score = 0
 
         for keyword in keywords:
-            if keyword in combined_text:
+            if keyword.lower() in combined_text:
                 score += 1
 
         scores[subject] = score
@@ -311,11 +437,8 @@ def classify_subject(text, filename=""):
 
     return best_subject
 
-def classify_all_topics(text, filename=""):
-    """
-    Find all chapters and topics that match the document content.
-    """
 
+def classify_all_topics(text, filename=""):
     combined_text = normalize_text(
         f"{filename} {text}"
     )
@@ -328,10 +451,11 @@ def classify_all_topics(text, filename=""):
 
         for topic, keywords in topics.items():
 
-            score = sum(
-                1 for keyword in keywords
-                if keyword in combined_text
-            )
+            score = 0
+
+            for keyword in keywords:
+                if keyword.lower() in combined_text:
+                    score += 1
 
             if score > 0:
                 matched_topics.append({
@@ -350,62 +474,167 @@ def classify_all_topics(text, filename=""):
     return results
 
 
-def classify_chapter_and_topic(text, filename=""):
-    """
-    Find the single strongest chapter and topic.
-    """
+def detect_unit_number(text, filename=""):
+    combined_text = normalize_text(
+        f"{filename} {text}"
+    )
 
-    all_topics = classify_all_topics(text, filename)
+    match = re.search(
+        r"\bunit\s*[-:]?\s*(\d+)\b",
+        combined_text
+    )
+
+    if match:
+        return int(match.group(1))
+
+    return None
+
+
+def classify_chapter_and_topic(text, filename=""):
+    all_topics = classify_all_topics(
+        text,
+        filename
+    )
 
     if not all_topics:
         return "Unknown", "Unknown"
 
+    unit_number = detect_unit_number(
+        text,
+        filename
+    )
+
+    if unit_number is not None:
+
+        chapter_prefix = f"Chapter {unit_number}:"
+
+        for chapter, topics in all_topics.items():
+
+            if chapter.startswith(chapter_prefix):
+
+                if not topics:
+                    return chapter, "Unknown"
+
+                combined_text = normalize_text(text)
+
+                topic_positions = []
+
+                for item in topics:
+
+                    topic = item["topic"]
+                    keywords = CHAPTER_TOPICS[chapter][topic]
+
+                    positions = []
+
+                    for keyword in keywords:
+
+                        position = combined_text.find(
+                            keyword.lower()
+                        )
+
+                        if position != -1:
+                            positions.append(position)
+
+                    if positions:
+                        topic_positions.append(
+                            (
+                                min(positions),
+                                item["topic"]
+                            )
+                        )
+
+                if topic_positions:
+
+                    topic_positions.sort(
+                        key=lambda item: item[0]
+                    )
+
+                    return (
+                        chapter,
+                        topic_positions[0][1]
+                    )
+
+                return chapter, topics[0]["topic"]
+
+    # Fallback when there is no clear Unit number.
     best_chapter = "Unknown"
     best_topic = "Unknown"
     best_score = 0
 
     for chapter, topics in all_topics.items():
 
-        for item in topics:
+        chapter_score = sum(
+            item["score"]
+            for item in topics
+        )
 
-            if item["score"] > best_score:
-                best_score = item["score"]
-                best_chapter = chapter
-                best_topic = item["topic"]
+        if chapter_score > best_score:
+
+            best_score = chapter_score
+            best_chapter = chapter
+            best_topic = topics[0]["topic"]
 
     return best_chapter, best_topic
 
 
-
 def classify_document(filename, text):
-    """
-    Return subject, primary chapter/topic,
-    and all detected chapters/topics.
-    """
-
-    subject = classify_subject(text, filename)
-
-    primary_chapter, primary_topic = classify_chapter_and_topic(
+    subject = classify_subject(
         text,
         filename
     )
 
-    all_topics = classify_all_topics(text, filename)
+    primary_chapter, primary_topic = (
+        classify_chapter_and_topic(
+            text,
+            filename
+        )
+    )
 
-    chapters = list(all_topics.keys())
+    all_topics = classify_all_topics(
+        text,
+        filename
+    )
+
+    unit_number = detect_unit_number(
+        text,
+        filename
+    )
+
+    # If a clear Unit number exists,
+    # keep only that chapter.
+    if unit_number is not None:
+
+        chapter_prefix = f"Chapter {unit_number}:"
+
+        filtered_topics = {}
+
+        for chapter, chapter_topics in all_topics.items():
+
+            if chapter.startswith(chapter_prefix):
+                filtered_topics[chapter] = chapter_topics
+
+        if filtered_topics:
+            all_topics = filtered_topics
+
+    chapters = list(
+        all_topics.keys()
+    )
 
     topics = []
 
     for chapter_topics in all_topics.values():
+
         for item in chapter_topics:
-            topics.append(item["topic"])
+            topics.append(
+                item["topic"]
+            )
 
     return {
         "subject": subject,
         "chapter": primary_chapter,
         "topic": primary_topic,
         "chapters": chapters,
-        "topics": topics,
+        "topics": topics
     }
 
 
@@ -413,6 +642,7 @@ if __name__ == "__main__":
 
     sample_text = """
     Database Management System.
+    Unit - 1 Database System Architecture.
     Three level architecture, data abstraction,
     data independence and database administrator.
     """
@@ -425,3 +655,5 @@ if __name__ == "__main__":
     print("Subject :", result["subject"])
     print("Chapter :", result["chapter"])
     print("Topic   :", result["topic"])
+    print("Chapters:", result["chapters"])
+    print("Topics  :", result["topics"])
